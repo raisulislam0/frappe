@@ -18,6 +18,8 @@ from frappe.utils.modules import get_modules_from_all_apps_for_user
 
 
 class NumberCard(Document):
+	_DOCTYPE_NAME = "Number Card"
+
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
 
@@ -230,9 +232,14 @@ def get_cards_for_user(
 		filters=filters,
 	)
 
+	allowed_modules = {module.get("module_name") for module in get_modules_from_all_apps_for_user()}
+
 	return (
 		condition_query.select(numberCard.name, numberCard.label, numberCard.document_type)
 		.where((numberCard.owner == frappe.session.user) | (numberCard.is_public == 1))
+		.where(
+			numberCard.module.isin(allowed_modules) | numberCard.module.isnull() | (numberCard.module == "")
+		)
 		.where(Criterion.any(search_conditions))
 	).run()
 
